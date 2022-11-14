@@ -1,0 +1,108 @@
+#lang plait
+;; Author: Jordan Edginton
+
+;; =============================================================================
+;; Interpreter: interpreter.rkt
+;; =============================================================================
+; (define (funct_name [para_name: para_type]): return_type
+
+(require "support.rkt")
+
+(define (eval [str : S-Exp]): Value
+  (interp (desugar (parse str))))
+
+
+; Desugar, now with and/or syntax. The way I have the and/or set up, it should use short-curcuiting.
+(define (desugar [expr : Expr]): Expr
+  (type-case Expr expr
+    [(sugar-and left right) (e-if (desugar left) (e-if (desugar right) (e-bool #t) (e-bool #f)) (e-bool #f))]
+    [(sugar-or left right) (e-if (desugar left) (e-bool #t) (e-if (desugar right) (e-bool #t) (e-bool #f)))]
+    [(e-if cond consq altern) (e-if (desugar cond) (desugar consq) (desugar altern))]
+    [else expr])  
+  )
+
+
+(define (check_num [val : Value]): Value
+  (type-case Value val
+    [(v-num value) val]
+    [else (raise-error(err-bad-arg-to-op (op-plus) val))]
+    )
+  )
+
+(define (check_str [val : Value]): Value
+  (type-case Value val
+    [(v-str value) val]
+    [else (raise-error(err-bad-arg-to-op (op-append) val))]
+    )
+  )
+
+(define (check_num_eq [val : Value]): Value
+  (type-case Value val
+    [(v-num value) val]
+    [else (raise-error(err-bad-arg-to-op (op-num-eq) val))]
+    )
+  )
+
+(define (check_str_eq [val : Value]): Value
+  (type-case Value val
+    [(v-str value) val]
+    [else (raise-error(err-bad-arg-to-op (op-str-eq) val))]
+    )
+  )
+
+(define (check_bool_if [val : Value]): Value
+  (type-case Value val
+    [(v-bool value) val]
+    [else (raise-error(err-if-got-non-boolean val))]
+    )
+  )
+
+(define-type (Optionof 'a)
+  (none)
+  (some [v : 'a]))
+
+; our "let" syntax? "let x = 2"; x is the name/symbol and 2 is the value
+(define-type Binding
+  [bind (name : Symbol) (val : Expr)])
+
+
+
+; an empty enviornment
+(define env-ht (hash (list)))
+
+; lookup item in env... hopefully
+(define (look_up [env : Env] [id : Symbol])
+  (hash-ref env id)
+ )
+
+; add item to env... hopefully
+(define (add_env [env : Env] [id : Symbol] [val : Value]): Env
+  (hash-set env id val))
+
+; This is our new interp function with the env parameter. it currently has an empty env sent to it
+(define (interp_env [expr : Expr] [env : Env]): Value
+  (type-case Expr expr
+    [(e-num value) (v-num value)]
+    [(e-str value) (v-str value)]
+    [(e-bool value) (v-bool value)]
+    ; [(e-var symbol) ((look_up expr))]
+    
+    [(e-op op left right)
+     (type-case Operator op
+       [(op-plus) (v-num (+ (v-num-value (check_num (interp left))) (v-num-value (check_num (interp right)))))]       
+       [(op-append) (v-str (string-append (v-str-value (check_str (interp left))) (v-str-value (check_str (interp right)))))]       
+       [(op-str-eq) (v-bool (string=? (v-str-value (check_str_eq (interp left))) (v-str-value (check_str_eq (interp right)))))]       
+       [(op-num-eq) (v-bool (= (v-num-value (check_num_eq (interp left))) (v-num-value (check_num_eq (interp right)))))]
+             )]
+    
+    [(e-if cond consq altern) (if (v-bool-value (check_bool_if(interp cond))) (interp consq) (interp altern))]
+    
+    [else (v-bool #f)] ;else returns false
+    )
+  )
+
+; our old interp function that is called at the start. It now just calls our new interp.
+(define (interp [expr : Expr]): Value
+  (interp_env expr env-ht)
+  )
+  

@@ -1,0 +1,180 @@
+#lang racket
+;; Author: Jordan Edginton
+(require "interpreter.rkt"
+         "support.rkt"
+         "test-support.rkt")
+
+(define/provide-test-suite student-tests ;; DO NOT EDIT THIS LINE ==========
+  ; My basic tests
+  (test-equal? "Works with Num primitive"
+               (eval `2) (v-num 2))
+  (test-equal? "Works with Str primitive"
+               (eval `"test") (v-str "test"))
+  (test-equal? "Works with Bool primitive"
+               (eval `true) (v-bool #t))
+  (test-equal? "Works with addition"
+               (eval `(+ 1 (+ 1 2))) (v-num 4))
+  (test-equal? "Works with string append"
+               (eval `(++ "f" "or")) (v-str "for"))
+  (test-equal? "Test number comparison"
+               (eval `{num= 1 1}) (v-bool #t))
+  (test-equal? "Test string comparison"
+               (eval `{str= "abc" "abc"}) (v-bool #t))
+
+  ;--- Guy's tests
+  (test-equal? "Test if case for numbers"
+               (eval `{if (num= 1 1) true false}) (v-bool #t))
+
+  (test-equal? "Test if case for strings"
+               (eval `{if (str= "abc" "abc") true false}) (v-bool #t))
+
+  (test-equal? "Test if case for number addition"
+               (eval `{if (num= (+ 1 1) 2) true false}) (v-bool #t))
+
+  (test-equal? "Test if case for string appending"
+               (eval `{if (str= (++ "Appending" "This") "AppendingThis") true false}) (v-bool #t))
+
+ (test-raises-interp-error? "Passing Str to + results in err-bad-arg-to-op"
+                             (eval `{+ "bad" 1})
+                             (err-bad-arg-to-op (op-plus) (v-str "bad")))
+     
+  (test-raises-interp-error? "1Passing Boolean to + results in err-bad-arg-to-op"
+                             (eval `{+ false true})
+                             (err-bad-arg-to-op (op-plus) (v-bool #f)))
+
+  (test-raises-interp-error? "2Passing Boolean to + results in err-bad-arg-to-op"
+                             (eval `{+ true 1})
+                             (err-bad-arg-to-op (op-plus) (v-bool #t)))
+  
+  (test-raises-interp-error? "Passing Str to + results in err-bad-arg-to-op"
+                             (eval `{+ 1 "nope"})
+                             (err-bad-arg-to-op (op-plus) (v-str "nope")))
+  
+  (test-raises-interp-error? "Passing Num to string append results in err-bad-arg-to-op"
+                             (eval `{++ 1 "nope"})
+                             (err-bad-arg-to-op (op-append) (v-num 1)))
+  
+  (test-raises-interp-error? "Passing Boolean and String to string append results in err-bad-arg-to-op"
+                             (eval `{++ true "nope"})
+                             (err-bad-arg-to-op (op-append) (v-bool #t)))
+    
+  (test-raises-interp-error? "Test string append Bool results in err-bad-arg-to-op"
+               (eval `{++ "append" true})
+               (err-bad-arg-to-op (op-append) (v-bool #t)))
+  
+  (test-raises-interp-error? "Passing string to num equality results in err-bad-arg-to-op"
+                             (eval `{num= 1 "nope"})
+                             (err-bad-arg-to-op (op-num-eq) (v-str "nope")))
+  
+  (test-raises-interp-error? "Passing num to string equality results in err-bad-arg-to-op"
+                             (eval `{str= "nope" 1})
+                             (err-bad-arg-to-op (op-str-eq) (v-num 1)))
+  
+  (test-raises-interp-error? "Passing non-bool to if clause"
+                             (eval `{if (++ "append" "boolFailure") true false})
+                             (err-if-got-non-boolean (v-str "appendboolFailure")))
+  ;--- end Guy's tests
+  
+
+  ;--- crazy tests for grading
+  (test-equal? "Test crazy addition"
+               (eval `(+ 1 (+ (+ (+ (+ (+ (+ 1 2) 2) 2) 2) 2) (+ (+ (+ 1 2) 2) (+ (+ 1 2) (+ 1 2)))))) (v-num 23))
+  
+  (test-equal? "Test crazy number comparison"
+               (eval `{num= (+ 1 (+ (+ (+ 1 2) 2) 2)) (+ (+ (+ 1 2) 2) (+ 1 2))}) (v-bool #t))
+  
+  (test-equal? "Test crazy string append"
+               (eval `(++ (++ (++ "a" (++ "z" "u")) (++ (++ "r" " ") (++ "l" (++ "a" "n")))) "e")) (v-str "azur lane"))
+  
+  (test-equal? "Test crazy string comparison"
+               (eval `{str= (++ (++ (++ "l" "ol") (++ "l" "ol")) "ol") (++ (++ "l" "ol") (++ (++ "l" "ol") "ol"))}) (v-bool #t))
+  
+  (test-equal? "Test crazy if case"
+               (eval `{if (num= 1 1) {if (num= 1 1) {if (num= 1 1) {if (num= 1 1) {if (num= 1 1) true false} false} false} false} false}) (v-bool #t))
+
+  (test-equal? "Test crazy multi case"
+               (eval `{if (num= (+ 1 (+ 1 2)) (+ 1 (+ 1 2))) {if (str= (++ (++ "l" "ol") "ol") (++ (++ "l" "ol") "ol")) true false} false}) (v-bool #t))
+
+  (test-raises-interp-error? "Test crazy multi error"
+                             (eval `{if (num= (+ 1 (+ 1 2)) (+ 1 (+ 1 2))) {if (++ (++ (++ "l" "ol") "ol") (++ (++ "l" "ol") "ol")) true false} false})
+                             (err-if-got-non-boolean (v-str "lolollolol")))
+
+  ;--- PA 2 tests
+  (test-equal? "Testing and"
+               (eval `(and (num= 1 1) (num= 1 1))) (v-bool #t))
+  (test-equal? "Testing or"
+               (eval `(or (num= 1 1) (num= 2 1))) (v-bool #t))
+  (test-equal? "Testing or right"
+               (eval `(or (num= 1 2) (num= 1 1))) (v-bool #t))
+  (test-equal? "Test if with and"
+               (eval `{if (and (num= 1 1) (num= 1 1)) true false}) (v-bool #t))
+  (test-equal? "Test if with or"
+               (eval `{if (or (num= 1 2) (num= 1 1)) true false}) (v-bool #t))
+
+  (test-equal? “Test simple AND” (eval `{and true true}) (v-bool #t))
+
+(test-equal? “Test simple AND” (eval `{and true false}) (v-bool #f))
+
+(test-equal? “Test simple AND” (eval `{and false true}) (v-bool #f))
+
+(test-equal? “Test simple AND” (eval `{and false false}) (v-bool #f))
+
+(test-equal? “Test simple OR” (eval `{or true true}) (v-bool #t))
+
+(test-equal? “Test simple OR” (eval `{or true false}) (v-bool #t))
+
+(test-equal? “Test simple OR” (eval `{or false true}) (v-bool #t))
+
+(test-equal? “Test simple OR” (eval `{or false false}) (v-bool #f))
+
+(test-equal? “Test simple nested (right) AND” (eval `{and true {and true {and true {and true {and true false}}}}}) (v-bool #f))
+
+(test-equal? “Test simple nested (right) AND” (eval `{and true {and true {and true {and true {and true true}}}}}) (v-bool #t))
+
+(test-equal? “Test simple nested (right) OR” (eval `{or false {or false {or false {or false {or false true}}}}}) (v-bool #t))
+
+(test-equal? “Test simple nested (right)OR” (eval `{or false {or false {or false {or false {or false false}}}}}) (v-bool #f))
+
+(test-equal? “Test simple nested (right) OR and AND” (eval `{or false {and true {or false {or true {and false true}}}}}) (v-bool #t))
+
+(test-equal? “Test simple nested (left) AND” (eval `{and {and {and true true } true } false}) (v-bool #f))
+
+(test-equal? “Test simple nested (left) AND” (eval `{and {and {and true true } true } true}) (v-bool #t))
+
+(test-equal? “Test simple nested (left) OR” (eval `{or {or {or false true } false } false}) (v-bool #t))
+
+(test-equal? “Test simple nested (left) OR” (eval `{or {or {or false false } false } false}) (v-bool #f))
+
+(test-equal? “Test simple nested (left) OR and AND” (eval `{or {and {or false false } true } false}) (v-bool #f))
+
+(test-equal? “Test simple nested (left and right) OR” (eval `{or {or {or {or false false} {or false true}} false} false}) (v-bool #t))
+
+(test-equal? “Test simple nested (left and right) AND” (eval `{and {and {and {and true false} {and true true}} true} true}) (v-bool #f))
+
+(test-equal? “Test simple nested (left and right) OR and AND” (eval `{and {or {and {or true false} {and true true}} true} true}) (v-bool #t))
+
+(test-equal? “Test AND with expression” (eval `{and {num= 1 1} {str= “Cat” “Cat”}}) (v-bool #t))
+
+(test-equal? “Test AND with expression” (eval `{and {num= 1 1} {str= “Cat” “Dog”}}) (v-bool #f))
+
+(test-equal? “Test OR with expression” (eval `{or {num= 1 1} {str= “Cat” “Dog”}}) (v-bool #t))
+
+(test-equal? “Test OR with expression” (eval `{or {num= 1 2} {str= “Cat” “Dog”}}) (v-bool #f))
+
+(test-equal? “Test complex AND” (eval `{and {if (str= (++ “Appending” “This”) “AppendingThis”) true false} {if (str= (++ “This” “That”) “ThisThat”) true false}}) (v-bool #t))
+
+(test-equal? “Test complex AND” (eval `{and {if (str= (++ “Appending” “This”) “AppendingThis”) true false} {if (str= (++ “This” “That”) “SomethingElse”) true false}}) (v-bool #f))
+
+(test-equal? “Test complex OR” (eval `{or {if (str= (++ “Appending” “This”) “AppendingThis”) true false} {if (str= (++ “This” “That”) “SomethingElse”) true false}}) (v-bool #t))
+
+(test-equal? “Test short-circuited AND” (eval `{and false “Not a bool”})(v-bool #f))
+
+(test-equal? “Test short-circuited OR” (eval `{or true “Not a bool”})(v-bool #t))
+
+  
+
+  
+)
+;; DO NOT EDIT BELOW THIS LINE =================================================
+
+(module+ main (run-tests student-tests))
