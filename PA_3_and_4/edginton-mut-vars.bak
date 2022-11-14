@@ -1,0 +1,59 @@
+#lang mystery-languages/mut-vars
+; Jordan Edginton
+
+; === EXPECTED TEST RESULTS ===
+;(defvar w 3)
+;(deffun (g v) (set! v (+ v 12)))
+;(g w)
+;(TEST w 3 15 15)
+;(defvar w (deffun (x) 2))
+
+
+
+; === HOW TO CLASSIFY A VARIANT ===
+;L1: 
+
+;L2: 
+
+;L3: 
+
+
+
+;-- EXPLANATIONS --
+;L1: 
+
+;L2: 
+
+;L3: 
+
+;NOTES:
+
+;(begin (defvar v 3) (defvar y "x") (+ 1 2) (+ 5 2))
+;(begin (defvar q 3) (defvar r q)
+;(defvar t 5)
+;(deffun (r) 4)
+;(r)
+;(defvar w t)
+(defvar w (deffun (x) (+ 2 2)))
+;(deffun (g x) (set! x (+ x x)))
+;(deffun (g) (begin (defvar x 2) (set! w (+ x 1))))
+;(deffun (g v) (begin (defvar x v) (set! v (+ x 12)) (deffun (r) (begin (deffun (u) x) (u))) (r)))
+;(deffun (g v) (begin (deffun (r) (begin (deffun (x) 2) (x))) (r)))
+;(g w)
+;(TEST w 3 15 15)
+;(deffun (g) (defvar w (+ w 1)))
+;(begin (set! w (+ w w)) (set! w (+ w w)))
+;(defvar e 6)
+;(set! v (+ v 12))
+;(begin (defvar y "x") (set! y 4) (set! y 5) (defvar y "x"))
+;(defvar y (defvar w "x"))
+;w
+;(set! y (begin (set! v 4) (set! y 4)))
+;(set! y (set! y 4))
+;(TEST v 4 4 4)
+;y v
+;(deffun (f x) (+ x 3))
+
+;(deffun (g v) (begin (set! v (+ v 12))))
+
+;(deffun (g v) (begin (set! v (+ v 12)) (deffun (g v) (begin (set! v (+ 2 12))))))

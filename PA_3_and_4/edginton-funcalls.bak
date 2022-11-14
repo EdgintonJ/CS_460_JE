@@ -1,0 +1,33 @@
+#lang mystery-languages/fun-calls
+; Jordan Edginton
+
+; === EXPECTED TEST RESULTS ===
+;(TEST (+ 4 5) 9 9.0 9)
+
+
+; === HOW TO CLASSIFY A VARIANT ===
+;L1: test 1 produces , test 2 produces , test 3 produces 
+
+;L2: test 1 produces , test 2 produces , test 3 produces 
+
+;L3: test 1 produces , test 2 produces , test 3 produces 
+
+
+
+;-- EXPLANATIONS --
+;L1: 
+;    
+
+;L2: 
+;    
+
+;L3: 
+;    
+;NOTES:
+
+
+(deffun (x y) (+ y (+ y (+ y (+ y 2)))))
+
+(deffun (fun x y z) (+ x y))
+
+;(not 0)

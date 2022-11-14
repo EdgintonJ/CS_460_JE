@@ -1,0 +1,65 @@
+#lang mystery-languages/conditionals
+; Jordan Edginton
+
+; === EXPECTED TEST RESULTS ===
+;(TEST (not (not 0)) (error "and: condition must be a boolean: 1") #t #f)
+
+;(TEST (not 0) failure #f #t)
+
+(TEST (or #f 123) failure 123 #t)
+
+;(TEST (or #f #f) failure #f #f)
+
+;(TEST (if (not 0) 3 4) failure 4 3)
+
+
+
+; === HOW TO CLASSIFY A VARIANT ===
+;L1: both tests produce errors
+
+;L2: Test 1 produces: #t and Test 2 produces: 
+
+;L3: Test 1 produces: #f (incorrect) and Test 2 produces: 
+
+
+
+;-- EXPLANATIONS --
+;L1: 
+;    
+
+;L2: 
+;    
+
+;L3: 
+;    
+
+
+;(TEST (+ 4 5) 9 9 9)
+
+;(TEST (++ "hello" "world") "helloworld" "helloworld" "hello world")
+
+;(++ "hello" "world")
+
+;(if 0 (if #f 4 (+ 2 3)) 3)
+
+;(if 0 4 3)
+
+;(if (and (or (and #t #t) #f) #t) #t #f)
+
+;(and #t 123)
+
+;(not #f)
+
+;(not 0)
+
+; (or #f #f)
+
+;(if 0 #t #f)
+
+;(+ 2 2)
+
+;{+ 1 "nope"}
+
+;(not (not "0"))
+
+;(not 0)
